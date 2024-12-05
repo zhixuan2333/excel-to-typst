@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Excel to Typst 转换器</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@myriaddreamin/typst.ts/dist/esm/contrib/all-in-one-lite.bundle.js"
+      id="typst"
+    ></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 min-h-screen p-6">
+    <div class="max-w-6xl mx-auto bg-white shadow-lg rounded-lg p-8">
+      <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
+        Excel to Typst 转换器（带实时预览）
+      </h1>
+      <div class="flex items-center justify-center mb-6">
+        <input
+          type="file"
+          id="file-input"
+          accept=".xlsx"
+          class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
+        />
+        <button
+          onclick="handleUpload()"
+          class="ml-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300 w-20"
+        >
+          转换
+        </button>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <h2 class="text-xl font-semibold text-gray-700 mb-4">Typst 代码：</h2>
+          <textarea
+            id="typst-code"
+            class="w-full h-[500px] p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y"
+          ></textarea>
+        </div>
+        <div>
+          <h2 class="text-xl font-semibold text-gray-700 mb-4">预览：</h2>
+          <div
+            id="preview"
+            class="border border-gray-300 rounded-lg p-4 overflow-auto max-h-[500px] bg-gray-50"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let typstCompiler;
+
+      document.getElementById("typst").addEventListener("load", function () {
+        $typst.setCompilerInitOptions({
+          getModule: () =>
+            "https://cdn.jsdelivr.net/npm/@myriaddreamin/typst-ts-web-compiler/pkg/typst_ts_web_compiler_bg.wasm",
+        });
+        $typst.setRendererInitOptions({
+          getModule: () =>
+            "https://cdn.jsdelivr.net/npm/@myriaddreamin/typst-ts-renderer/pkg/typst_ts_renderer_bg.wasm",
+        });
+        typstCompiler = $typst;
+      });
+
+      function handleUpload() {
+        const fileInput = document.getElementById("file-input");
+        const file = fileInput.files[0];
+
+        if (!file || !file.name.endsWith(".xlsx")) {
+          alert("请选择 Excel 文件");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+
+          const typstCode = convertToTypst(worksheet);
+
+          document.getElementById("typst-code").value = typstCode;
+          renderTypst(typstCode);
+        };
+        reader.readAsArrayBuffer(file);
+      }
+
+      function convertToTypst(worksheet) {
+        const range = XLSX.utils.decode_range(worksheet["!ref"]);
+        const columns = range.e.c - range.s.c + 1;
+        const merges = worksheet["!merges"] || [];
+
+        let typstCode = `#table(columns: ${columns},\n`;
+
+        for (let row = range.s.r; row <= range.e.r; row++) {
+          typstCode += "  ";
+          for (let col = range.s.c; col <= range.e.c; col++) {
+            const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+            const mergeInfo = findMergeInfo(merges, row, col);
+
+            if (mergeInfo) {
+              if (mergeInfo.s.r === row && mergeInfo.s.c === col) {
+                const cell = worksheet[cellAddress];
+                const value = cell ? cell.v : "";
+                const rowspan = mergeInfo.e.r - mergeInfo.s.r + 1;
+                const colspan = mergeInfo.e.c - mergeInfo.s.c + 1;
+
+                typstCode += "table.cell(";
+                if (rowspan > 1) {
+                  typstCode += `rowspan: ${rowspan}, `;
+                }
+                if (colspan > 1) {
+                  typstCode += `colspan: ${colspan}, `;
+                }
+                typstCode = typstCode.replace(/,\s*$/, "");
+                typstCode += `)[${value}], `;
+              }
+            } else {
+              const cell = worksheet[cellAddress];
+              const value = cell ? cell.v : "";
+              typstCode += `[${value}], `;
+            }
+          }
+          typstCode += "\n";
+        }
+
+        typstCode += ")";
+        return typstCode;
+      }
+
+      function findMergeInfo(merges, row, col) {
+        return merges.find(
+          (merge) =>
+            row >= merge.s.r &&
+            row <= merge.e.r &&
+            col >= merge.s.c &&
+            col <= merge.e.c
+        );
+      }
+
+      function renderTypst(typstCode) {
+        if (!typstCompiler) {
+          console.error("Typst compiler not initialized");
+          return;
+        }
+
+        const fullTypstCode = `#set page(width: auto, height: auto, margin: 0pt)\n${typstCode}`;
+        typstCompiler
+          .svg({ mainContent: fullTypstCode })
+          .then((svg) => {
+            document.getElementById("preview").innerHTML = svg;
+          })
+          .catch((error) => {
+            console.error("Error rendering Typst:", error);
+            document.getElementById("preview").innerHTML =
+              "<p class='text-red-500'>Error rendering Typst code</p>";
+          });
+      }
+
+      // 添加实时预览功能
+      document
+        .getElementById("typst-code")
+        .addEventListener("input", function () {
+          renderTypst(this.value);
+        });
+    </script>
+  </body>
+</html>
