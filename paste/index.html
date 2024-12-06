@@ -13,9 +13,13 @@
       </h1>
 
       <p class="text-gray-700 text-lg mb-6">
-        从 Word、Excel、Google Sheets
+        从 Word、Excel、Numbers
         等地方复制表格内容，粘贴到下面的输入框中，然后点击“转换为
-        Typst”按钮，即可生成 Typst 代码。
+        Typst”按钮，即可生成 Typst 代码。跳转：<a
+          href="/"
+          class="text-center text-blue-500 font-semibold mb-6"
+          >Excel 文件到 Typst 转换器</a
+        >
       </p>
 
       <div class="mb-6">
@@ -236,8 +240,6 @@
                   if (p && p.getAttribute("align")) {
                     alignParts.push(p.getAttribute("align"));
                   }
-                  
-
                 }
               }
 
