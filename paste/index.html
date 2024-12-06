@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>剪贴板到 Typst 转换器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 min-h-screen p-6">
+    <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
+      <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
+        剪贴板到 Typst 转换器
+      </h1>
+
+      <p class="text-gray-700 text-lg mb-6">
+        从 Word、Excel、Google Sheets
+        等地方复制表格内容，粘贴到下面的输入框中，然后点击“转换为
+        Typst”按钮，即可生成 Typst 代码。
+      </p>
+
+      <div class="mb-6">
+        <textarea
+          id="paste-area"
+          class="w-full h-40 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y"
+          placeholder="在此处粘贴表格内容"
+        ></textarea>
+      </div>
+
+      <div class="mb-6">
+        <label class="text-xl font-semibold text-gray-700 mb-4">
+          全局表格对齐方式：
+        </label>
+        <div class="flex gap-8 mt-4">
+          <!-- Horizontal alignment -->
+          <div class="flex-1">
+            <label class="block text-gray-700 text-md font-bold mb-2"
+              >水平对齐</label
+            >
+            <div class="space-y-2">
+              <div>
+                <label class="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    class="form-checkbox"
+                    name="global-align"
+                    value="left"
+                  />
+                  <span class="ml-2">左对齐</span>
+                </label>
+              </div>
+              <div>
+                <label class="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    class="form-checkbox"
+                    name="global-align"
+                    value="center"
+                  />
+                  <span class="ml-2">水平居中</span>
+                </label>
+              </div>
+              <div>
+                <label class="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    class="form-checkbox"
+                    name="global-align"
+                    value="right"
+                  />
+                  <span class="ml-2">右对齐</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <!-- Vertical alignment -->
+          <div class="flex-1">
+            <label class="block text-gray-700 text-md font-bold mb-2"
+              >垂直对齐</label
+            >
+            <div class="space-y-2">
+              <div>
+                <label class="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    class="form-checkbox"
+                    name="global-align"
+                    value="top"
+                  />
+                  <span class="ml-2">顶部对齐</span>
+                </label>
+              </div>
+              <div>
+                <label class="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    class="form-checkbox"
+                    name="global-align"
+                    value="horizon"
+                  />
+                  <span class="ml-2">垂直居中</span>
+                </label>
+              </div>
+              <div>
+                <label class="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    class="form-checkbox"
+                    name="global-align"
+                    value="bottom"
+                  />
+                  <span class="ml-2">底部对齐</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <label class="flex items-center">
+          <input type="checkbox" id="parse-cell-align" class="mr-2" />
+          <span class="text-gray-700 text-sm font-bold"
+            >解析单元格对齐属性</span
+          >
+        </label>
+      </div>
+
+      <div class="mb-6">
+        <button
+          onclick="convertToTypst()"
+          class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300"
+        >
+          转换为 Typst
+        </button>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Typst 代码：</h2>
+        <textarea
+          id="typst-code"
+          class="w-full h-60 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y"
+          readonly
+        ></textarea>
+      </div>
+    </div>
+
+    <script>
+      function getGlobalAlign() {
+        const checkboxes = document.querySelectorAll(
+          'input[name="global-align"]:checked'
+        );
+        const values = Array.from(checkboxes).map((cb) => cb.value);
+        const horizontal = values.filter((v) =>
+          ["left", "center", "right"].includes(v)
+        )[0];
+        const vertical = values.filter((v) =>
+          ["top", "horizon", "bottom"].includes(v)
+        )[0];
+        return [horizontal, vertical].filter(Boolean).join("+");
+      }
+
+      function convertToTypst() {
+        const pasteArea = document.getElementById("paste-area");
+        const typstCode = document.getElementById("typst-code");
+        const globalAlign = getGlobalAlign();
+        const parseCellAlign =
+          document.getElementById("parse-cell-align").checked;
+
+        // 创建一个临时的 div 元素来解析 HTML
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = pasteArea.value;
+
+        // 读取 style，解析 class
+        const style = tempDiv.querySelector("style");
+
+        const table = tempDiv.querySelector("table");
+        if (!table) {
+          alert("未找到有效的表格内容，请确保粘贴了正确的表格。");
+          return;
+        }
+
+        const rows = table.rows;
+        const firstRow = rows[0];
+        const columnCount = Array.from(firstRow.cells).reduce((total, cell) => {
+          return total + (cell.colSpan || 1);
+        }, 0);
+
+        let typstOutput = `#table(columns: ${columnCount},`;
+
+        if (globalAlign) {
+          typstOutput += ` align: ${globalAlign},`;
+        }
+
+        typstOutput += "\n";
+        for (let i = 0; i < rows.length; i++) {
+          const cells = rows[i].cells;
+          typstOutput += "  ";
+          for (let j = 0; j < columnCount; j++) {
+            if (j < cells.length) {
+              const cell = cells[j];
+              const rowspan =
+                cell.rowSpan > 1 ? `rowspan: ${cell.rowSpan}, ` : "";
+              const colspan =
+                cell.colSpan > 1 ? `colspan: ${cell.colSpan}, ` : "";
+
+              let alignParts = [];
+              if (parseCellAlign) {
+                if (cell.className) {
+                  const classes = cell.className.split(" ");
+                  // 解析 class 的样式
+                  for (const className of classes) {
+                    if (style) {
+                      const regex = new RegExp(`\\.${className}\\s*{([^}]+)}`);
+                      const match = style.innerHTML.match(regex);
+                      if (match) {
+                        const styleParts = match[1].split(";");
+                        for (const stylePart of styleParts) {
+                          const [key, value] = stylePart.split(":");
+                          if (key === "text-align") {
+                            alignParts.push(value.trim());
+                          }
+                          if (key === "vertical-align") {
+                            alignParts.push(value.trim());
+                          }
+                        }
+                      }
+                    }
+                  }
+                } else {
+                  // <td valign="top">
+                  if (cell.getAttribute("valign")) {
+                    alignParts.push(cell.getAttribute("valign"));
+                  }
+                  // td 中的 <p> 标签有 align 属性
+                  const p = cell.querySelector("p");
+                  if (p && p.getAttribute("align")) {
+                    alignParts.push(p.getAttribute("align"));
+                  }
+                  
+
+                }
+              }
+
+              const align =
+                alignParts.length > 0 ? `align: ${alignParts.join("+")}, ` : "";
+
+              if (rowspan || colspan || align) {
+                typstOutput += `table.cell(${rowspan}${colspan}${align})[${cell.textContent.trim()}], `;
+              } else {
+                typstOutput += `[${cell.textContent.trim()}], `;
+              }
+            }
+          }
+          typstOutput += "\n";
+        }
+
+        typstOutput += ")";
+        typstCode.value = typstOutput;
+      }
+
+      // 添加粘贴事件监听器
+      document
+        .getElementById("paste-area")
+        .addEventListener("paste", function (e) {
+          e.preventDefault();
+          const text =
+            e.clipboardData.getData("text/html") ||
+            e.clipboardData.getData("text/plain");
+          this.value = text;
+        });
+
+      // 添加全局对齐复选框的互斥逻辑
+      const globalAlignCheckboxes = document.querySelectorAll(
+        'input[name="global-align"]'
+      );
+      globalAlignCheckboxes.forEach((checkbox) => {
+        checkbox.addEventListener("change", function () {
+          const isHorizontal = ["left", "center", "right"].includes(this.value);
+          const isVertical = ["top", "horizon", "bottom"].includes(this.value);
+
+          globalAlignCheckboxes.forEach((cb) => {
+            if (cb !== this) {
+              if (
+                (isHorizontal &&
+                  ["left", "center", "right"].includes(cb.value)) ||
+                (isVertical && ["top", "horizon", "bottom"].includes(cb.value))
+              ) {
+                cb.checked = false;
+              }
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
