@@ -5,11 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Excel to Typst Converter</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
-    <script
-      type="module"
-      src="https://cdn.jsdelivr.net/npm/@myriaddreamin/typst.ts/dist/esm/contrib/all-in-one-lite.bundle.js"
-      id="typst"
-    ></script>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="bg-gray-100 min-h-screen p-6">
@@ -18,16 +13,15 @@
         Excel to Typst Converter
       </h1>
       <p class="text-gray-700 text-lg mb-6">
-        选择一个 Excel 文件，然后点击“转换”按钮，即可生成 Typst 代码。跳转：
+        Select an Excel file and click the "Convert" button to generate Typst code. Jump to:
         <a
           href="/excel-to-typst/paste"
           class="text-blue-500 font-semibold mb-6"
         >
-          粘贴板到 Typst 转换器
+          Clipboard to Typst Converter
         </a>
       </p>
 
-      <!-- 元素垂直居中 -->
       <div class="flex items-center justify-center">
         <input
           type="file"
@@ -46,10 +40,9 @@
         onclick="handleConvert()"
         class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300 mt-4"
       >
-        转换
+        Convert
       </button>
       <div>
-        <!-- <h2 class="text-xl font-semibold text-gray-700 mb-4">Typst 代码：</h2> -->
         <textarea
           id="typst-code"
           class="w-full h-[500px] p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y mt-4"
@@ -63,7 +56,7 @@
         const file = fileInput.files[0];
 
         if (!file || !file.name.endsWith(".xlsx")) {
-          alert("请选择 Excel 文件");
+          alert("Please select an Excel file");
           return;
         }
 
@@ -90,7 +83,7 @@
         const file = fileInput.files[0];
 
         if (!file || !file.name.endsWith(".xlsx")) {
-          alert("请选择 Excel 文件");
+          alert("Please select an Excel file");
           return;
         }
 
@@ -160,7 +153,6 @@
         );
       }
 
-      // 添加实时预览功能
       document
         .getElementById("typst-code")
         .addEventListener("input", function () {
