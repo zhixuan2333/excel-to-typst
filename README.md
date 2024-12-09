@@ -14,9 +14,12 @@ A tool to convert Excel tables (or Word, PowerPoint, Numbers...) to Typst tables
 To use this tool, visit the [From Excel](https://hongjr03.github.io/excel-to-typst/) or [From Clipboard](https://hongjr03.github.io/excel-to-typst/paste) pages.
 
 ## Example
-Here are some examples of converted tables:
+Here are some examples:
 
-| From Excel | From Clipboard |
-| -------------------------- | -------------------------- |
-| ![excel](assets/excel.gif) | ![paste](assets/paste.gif) |
+- From Excel
 
+  ![excel](assets/excel.gif)
+  
+- From Clipboard
+
+  ![paste](assets/paste.gif)
