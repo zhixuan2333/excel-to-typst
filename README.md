@@ -1,9 +1,22 @@
 # Excel to Typst Converter
+[From Excel](https://hongjr03.github.io/excel-to-typst/) | [From Clipboard](https://hongjr03.github.io/excel-to-typst/paste)
 
-[从 Excel](https://hongjr03.github.io/excel-to-typst/) | [从剪贴板](https://hongjr03.github.io/excel-to-typst/paste)
+A tool to convert Excel tables (or Word, PowerPoint, Numbers...) to Typst tables. It supports converting from a specified worksheet or reading from the clipboard. Based on the work of @flaribbit.
 
-| Excel 示例                 | 剪贴板示例                 |
+## Features
+- Convert Excel tables to Typst format
+- Support for other formats like Word, PowerPoint, Numbers
+- Option to select specific worksheets for conversion (Only in **From Excel**)
+- Clipboard reading and conversion, and option to convert alignment (Only in **From Clipboard**)
+
+## Getting Started
+
+To use this tool, visit the [From Excel](https://hongjr03.github.io/excel-to-typst/) or [From Clipboard](https://hongjr03.github.io/excel-to-typst/paste) pages.
+
+## Example
+Here are some examples of converted tables:
+
+| From Excel | From Clipboard |
 | -------------------------- | -------------------------- |
 | ![excel](assets/excel.gif) | ![paste](assets/paste.gif) |
 
-一个将 Excel 表格（或 Word, PowerPoint, Numbers...）转换为 Typst 表格的工具，支持选择指定工作表转换或从剪贴板读取转换。基于群友 @flaribbit 开发的 Python 版本修改为 HTML。
