@@ -1,5 +1,8 @@
 # Excel to Typst Converter
 
+> [!NOTE]
+> Try my new package [eXMLlent](https://github.com/hongjr03/typst-xml-table-parser) in typst, which works as excel-to-typst converter below!
+
 [From Excel](https://hongjr03.github.io/excel-to-typst/) | [From Clipboard](https://hongjr03.github.io/excel-to-typst/paste)
 
 A tool to convert Excel tables (or Word, PowerPoint, Numbers...) to Typst tables. It supports converting from a specified worksheet or reading from the clipboard. Based on the work of @flaribbit.
@@ -8,8 +11,8 @@ A tool to convert Excel tables (or Word, PowerPoint, Numbers...) to Typst tables
 
 - Convert Excel tables to Typst format
 - Support for other formats like Word, PowerPoint, Numbers
-- Option to select specific worksheets for conversion (Only in **From Excel**)
-- Clipboard reading and conversion, and option to convert alignment (Only in **From Clipboard**)
+- Option to select specific worksheets for conversion (**From Excel** or [eXMLlent](https://github.com/hongjr03/typst-xml-table-parser))
+- Clipboard reading and conversion, and option to convert alignment (**From Clipboard**)
 
 ## Getting Started
 
