@@ -1,7 +1,7 @@
 # Excel to Typst Converter
 
-> [!NOTE]
-> Try my new package [eXMLlent](https://github.com/hongjr03/typst-xml-table-parser) in typst, which works as excel-to-typst converter below!
+> [!IMPORTANT]
+> Try my new package [ReXLlenT](https://github.com/hongjr03/typst-xml-table-parser) in typst, which works as the from-excel method below (even better)!
 
 [From Excel](https://hongjr03.github.io/excel-to-typst/) | [From Clipboard](https://hongjr03.github.io/excel-to-typst/paste)
 
