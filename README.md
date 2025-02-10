@@ -11,7 +11,7 @@ A tool to convert Excel tables (or Word, PowerPoint, Numbers...) to Typst tables
 
 - Convert Excel tables to Typst format
 - Support for other formats like Word, PowerPoint, Numbers
-- Option to select specific worksheets for conversion (**From Excel** or [eXMLlent](https://github.com/hongjr03/typst-xml-table-parser))
+- Option to select specific worksheets for conversion (**From Excel** or [ReXLlenT](https://github.com/hongjr03/typst-xml-table-parser))
 - Clipboard reading and conversion, and option to convert alignment (**From Clipboard**)
 
 ## Getting Started
