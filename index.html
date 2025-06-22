@@ -33,15 +33,26 @@
         <select
           id="sheet-select"
           class="ml-4 w-full text-sm text-slate-500 border border-gray-300 rounded-lg py-2 px-4"
+          onchange="handleConvert()"
         ></select>
       </div>
 
-      <button
-        onclick="handleConvert()"
-        class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300 mt-4"
-      >
-        Convert
-      </button>
+      <div class="mt-4">
+        <label for="significant-figures" class="block text-gray-700 text-sm font-bold mb-2">
+          Significant Figures (for numeric values):
+        </label>
+        <input
+          type="number"
+          id="significant-figures"
+          min="1"
+          max="10"
+          value="3"
+          class="w-full text-sm text-slate-500 border border-gray-300 rounded-lg py-2 px-4"
+          placeholder="Enter number of significant figures (1-10)"
+          onchange="handleConvert()"
+        />
+      </div>
+
       <div>
         <textarea
           id="typst-code"
@@ -74,6 +85,11 @@
             option.text = sheetName;
             sheetSelect.appendChild(option);
           });
+          
+          // Auto-convert after loading the file
+          if (sheetNames.length > 0) {
+            handleConvert();
+          }
         };
         reader.readAsArrayBuffer(file);
       }
@@ -93,14 +109,15 @@
           const workbook = XLSX.read(data, { type: "array" });
           const sheetName = document.getElementById("sheet-select").value;
           const worksheet = workbook.Sheets[sheetName];
+          const significantFigures = parseInt(document.getElementById("significant-figures").value) || 3;
 
-          const typstCode = convertToTypst(worksheet);
+          const typstCode = convertToTypst(worksheet, significantFigures);
           document.getElementById("typst-code").value = typstCode;
         };
         reader.readAsArrayBuffer(file);
       }
 
-      function convertToTypst(worksheet) {
+      function convertToTypst(worksheet, significantFigures) {
         const range = XLSX.utils.decode_range(worksheet["!ref"]);
         const columns = range.e.c - range.s.c + 1;
         const merges = worksheet["!merges"] || [];
@@ -116,7 +133,7 @@
             if (mergeInfo) {
               if (mergeInfo.s.r === row && mergeInfo.s.c === col) {
                 const cell = worksheet[cellAddress];
-                const value = cell ? cell.v : "";
+                const value = formatCellValue(cell, significantFigures);
                 const rowspan = mergeInfo.e.r - mergeInfo.s.r + 1;
                 const colspan = mergeInfo.e.c - mergeInfo.s.c + 1;
 
@@ -132,7 +149,7 @@
               }
             } else {
               const cell = worksheet[cellAddress];
-              const value = cell ? cell.v : "";
+              const value = formatCellValue(cell, significantFigures);
               typstCode += `[${value}], `;
             }
           }
@@ -141,6 +158,25 @@
 
         typstCode += ")";
         return typstCode;
+      }
+
+      function formatCellValue(cell, significantFigures) {
+        if (!cell) return "";
+        
+        // Check if the cell contains a numeric value
+        if (typeof cell.v === 'number') {
+          const formatted = cell.v.toPrecision(significantFigures);
+          // Convert scientific notation to LaTeX format
+          if (formatted.includes('e')) {
+            const [coefficient, exponent] = formatted.split('e');
+            return `$${coefficient} \\times 10^{${exponent}}$`;
+          } else {
+            return `$${formatted}$`;
+          }
+        }
+        
+        // For non-numeric values, return as is
+        return cell.v || "";
       }
 
       function findMergeInfo(merges, row, col) {

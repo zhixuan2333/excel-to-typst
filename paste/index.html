@@ -19,8 +19,7 @@
 
     <p class="text-gray-700 text-lg mb-6">
       Copy table content from Word, Excel, Numbers, etc., paste it into the
-      input box below, and click the "Convert to Typst" button to generate
-      Typst code. Jump to:
+      input box below, and it will automatically generate Typst code. Jump to:
       <a href="/excel-to-typst" class="text-center text-blue-500 font-semibold mb-6">
         Excel to Typst Converter
       </a>
@@ -95,10 +94,19 @@
     </div>
 
     <div class="mb-6">
-      <button onclick="convertToTypst()"
-        class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300">
-        Convert to Typst
-      </button>
+      <label for="significant-figures" class="block text-gray-700 text-sm font-bold mb-2">
+        Significant Figures (for numeric values):
+      </label>
+      <input
+        type="number"
+        id="significant-figures"
+        min="1"
+        max="10"
+        value="3"
+        class="w-full text-sm text-slate-500 border border-gray-300 rounded-lg py-2 px-4"
+        placeholder="Enter number of significant figures (1-10)"
+        onchange="convertToTypst()"
+      />
     </div>
 
     <div>
@@ -144,6 +152,7 @@
       const globalAlign = getGlobalAlign();
       const parseCellAlign =
         document.getElementById("parse-cell-align").checked;
+      const significantFigures = parseInt(document.getElementById("significant-figures").value) || 3;
 
       const tempDiv = document.createElement("div");
       tempDiv.innerHTML = pasteArea.value;
@@ -152,9 +161,6 @@
 
       const table = tempDiv.querySelector("table");
       if (!table) {
-        alert(
-          "No valid table content found, please ensure the correct table is pasted."
-        );
         return;
       }
 
@@ -219,10 +225,12 @@
             const align =
               alignParts.length > 0 ? `align: ${alignParts.join("+")}, ` : "";
 
+            const cellValue = formatCellValue(cell.textContent.trim(), significantFigures);
+
             if (rowspan || colspan || align) {
-              typstOutput += `table.cell(${rowspan}${colspan}${align})[${cell.textContent.trim()}], `;
+              typstOutput += `table.cell(${rowspan}${colspan}${align})[${cellValue}], `;
             } else {
-              typstOutput += `[${cell.textContent.trim()}], `;
+              typstOutput += `[${cellValue}], `;
             }
           }
         }
@@ -244,6 +252,24 @@
         });
     }
 
+    function formatCellValue(value, significantFigures) {
+      // Check if the value is a number
+      const numValue = parseFloat(value);
+      if (!isNaN(numValue) && value.trim() !== "") {
+        const formatted = numValue.toPrecision(significantFigures);
+        // Convert scientific notation to LaTeX format
+        if (formatted.includes('e')) {
+          const [coefficient, exponent] = formatted.split('e');
+          return `$${coefficient} times 10^(${exponent})$`;
+        } else {
+          return `$${formatted}$`;
+        }
+      }
+      
+      // For non-numeric values, return as is
+      return value;
+    }
+
     document
       .getElementById("paste-area")
       .addEventListener("paste", function (e) {
@@ -252,6 +278,15 @@
           e.clipboardData.getData("text/html") ||
           e.clipboardData.getData("text/plain");
         this.value = text;
+        // Auto-convert after pasting
+        setTimeout(() => convertToTypst(), 100);
+      });
+
+    document
+      .getElementById("paste-area")
+      .addEventListener("input", function () {
+        // Auto-convert on input changes
+        setTimeout(() => convertToTypst(), 300);
       });
 
     const globalAlignCheckboxes = document.querySelectorAll(
@@ -273,7 +308,15 @@
             }
           }
         });
+        
+        // Auto-convert when alignment changes
+        convertToTypst();
       });
+    });
+
+    document.getElementById("parse-cell-align").addEventListener("change", function() {
+      // Auto-convert when parse cell align option changes
+      convertToTypst();
     });
   </script>
 </body>
